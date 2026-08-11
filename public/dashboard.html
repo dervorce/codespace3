@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard - Codespace</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="tag">Codespace</div>
+    <div class="user">Logged in as <strong id="whoami"></strong> &middot; <a href="#" id="logoutLink">Log out</a></div>
+  </div>
+
+  <header>
+    <h1>Your repositories</h1>
+    <p class="sub">Create a repository or join your team's repository with its owner, name, and password.</p>
+  </header>
+
+  <div class="card">
+    <h2>Create a repository</h2>
+    <form id="createForm">
+      <label for="createName">Repository name</label>
+      <input type="text" id="createName" placeholder="e.g. backend-project">
+      <label for="createPassword">Team password</label>
+      <input type="password" id="createPassword" placeholder="shared with your team">
+      <div id="createError" class="error" style="display:none;"></div>
+      <button type="submit" id="createBtn">Create repository</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Join a repository</h2>
+    <form id="joinForm">
+      <label for="joinOwner">Owner username</label>
+      <input type="text" id="joinOwner" placeholder="e.g. alice">
+      <label for="joinName">Repository name</label>
+      <input type="text" id="joinName" placeholder="exact repository name">
+      <label for="joinPassword">Team password</label>
+      <input type="password" id="joinPassword">
+      <div id="joinError" class="error" style="display:none;"></div>
+      <button type="submit" id="joinBtn">Join repository</button>
+    </form>
+  </div>
+
+  <h2>Repositories you're in</h2>
+  <div id="spaceList"></div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

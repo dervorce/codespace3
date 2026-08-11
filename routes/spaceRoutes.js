@@ -1,0 +1,16 @@
+const express = require('express');
+const multer = require('multer');
+const jwtAuth = require('../middleware/jwtAuth');
+const spaces = require('../controllers/spaceController');
+const files = require('../controllers/fileController');
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
+router.use(jwtAuth);
+router.post('/', spaces.createSpace);
+router.get('/', spaces.mySpaces);
+router.post('/join', spaces.joinSpace);
+router.get('/:id', spaces.getSpace);
+router.post('/:id/upload', upload.array('files'), files.uploadFiles);
+router.get('/:id/files', files.listFiles);
+router.get('/:id/files/:fileId', files.getFileContent);
+module.exports = router;

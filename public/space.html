@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Repository - Codespace</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="tag"><a href="dashboard.html">&larr; Codespace</a></div>
+    <div class="user">Logged in as <strong id="whoami"></strong> &middot; <a href="#" id="logoutLink">Log out</a></div>
+  </div>
+
+  <header>
+    <h1 id="spaceName">Loading...</h1>
+    <p class="sub">Repository members</p>
+    <div id="memberList"></div>
+  </header>
+
+  <div class="card">
+    <h2>Upload to repository</h2>
+    <div class="row" style="margin-bottom:10px;">
+      <div class="file-drop" id="dropZone" tabindex="0" role="button" style="flex:1;" aria-label="Choose or drop files">
+        Click to choose file(s), or drag them here
+      </div>
+      <button type="button" id="folderBtn" class="secondary">Upload folder</button>
+    </div>
+    <input type="file" id="fileInput" multiple style="display:none;">
+    <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
+    <div class="file-name" id="fileName"></div>
+
+    <label for="notesInput">Notes (what did you change?)</label>
+    <textarea id="notesInput" rows="3" placeholder="e.g. fixed the login validation bug, added error messages"></textarea>
+
+    <div id="errorMsg" class="error" style="display:none;"></div>
+    <div id="successMsg" class="success" style="display:none;"></div>
+    <button type="button" id="uploadBtn">Upload &amp; log</button>
+  </div>
+
+  <div class="row">
+    <h2 style="margin:0;">Latest uploaded changes</h2>
+    <span class="user" id="entryCount"></span>
+  </div>
+  <div id="entries"></div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/space.js"></script>
+</body>
+</html>
