@@ -71,3 +71,13 @@ async function api(path, { method = "GET", body, isFormData = false } = {}) {
   }
   return data;
 }
+
+async function apiText(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(API_BASE + path, { headers });
+  const content = await res.text();
+  if (!res.ok) throw new Error(content || `Request failed (${res.status})`);
+  return content;
+}

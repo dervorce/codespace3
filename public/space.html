@@ -35,14 +35,19 @@
 
     <div id="errorMsg" class="error" style="display:none;"></div>
     <div id="successMsg" class="success" style="display:none;"></div>
-    <button type="button" id="uploadBtn">Upload &amp; log</button>
+    <button type="button" id="uploadBtn">Upload &amp; commit</button>
   </div>
 
   <div class="row">
-    <h2 style="margin:0;">Latest uploaded changes</h2>
+    <h2 style="margin:0;">Repository files</h2>
     <span class="user" id="entryCount"></span>
   </div>
   <div id="entries"></div>
+
+  <details class="card">
+    <summary>Browser upload history</summary>
+    <div id="uploadHistory" class="history-list"></div>
+  </details>
 </div>
 
 <script src="js/api.js"></script>

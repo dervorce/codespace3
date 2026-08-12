@@ -25,11 +25,13 @@ const folderInput = document.getElementById('folderInput');
 const folderBtn = document.getElementById('folderBtn');
 const fileNameEl = document.getElementById('fileName');
 const notesInput = document.getElementById('notesInput');
+const uploadHistoryEl = document.getElementById('uploadHistory');
 
 let pendingFiles = []; // File objects queued for upload
 let openId = null;     // currently-expanded file entry id
 let openContent = {};  // fileId -> fetched content, cached after first open
 let openFolders = new Set(); // paths of currently-expanded folders
+let currentRepository = null;
 
 function escapeHtml(str){
   return str.replace(/[&<>"']/g, c => ({
@@ -45,23 +47,61 @@ async function loadSpace(){
   try{
     const { space } = await api(`/spaces/${spaceId}`);
     spaceNameEl.textContent = space.name;
+    currentRepository = { owner: space.ownerUsername, name: space.name };
     memberListEl.innerHTML = space.members
       .map(m => `<span class="member-chip">${escapeHtml(m.username)} (${escapeHtml(m.role)})</span>`)
       .join('');
+    await loadGitTree();
+    await loadUploadHistory();
   }catch(err){
     spaceNameEl.textContent = 'Repository';
     memberListEl.innerHTML = `<span class="error">Couldn't load members: ${escapeHtml(err.message)}</span>`;
   }
 }
 
-/* ---- Load / render the upload history ("latest updates") ---- */
-async function loadFiles(){
+/* Git is the source of truth: every normal git push and browser upload is shown here. */
+async function loadGitTree(){
+  if(!currentRepository) return;
+  try{
+    const { files } = await api(`/repos/${encodeURIComponent(currentRepository.owner)}/${encodeURIComponent(currentRepository.name)}/tree?ref=main`);
+    const gitFiles = files.map((name, index) => ({
+      id: `git-${index}`,
+      name,
+      gitPath: name,
+      language: languageForPath(name),
+      uploadedBy: 'Git',
+      uploadedAt: null,
+      notes: ''
+    }));
+    renderFiles(gitFiles);
+  }catch(err){
+    entriesEl.innerHTML = `<div class="empty">Couldn't load repository files: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function loadUploadHistory(){
   try{
     const { files } = await api(`/spaces/${spaceId}/files`);
-    renderFiles(files);
+    if(!files.length){
+      uploadHistoryEl.innerHTML = '<div class="empty">No browser uploads yet.</div>';
+      return;
+    }
+    uploadHistoryEl.innerHTML = files.slice(0, 25).map(file => `<div class="entry-meta"><span class="who">${escapeHtml(file.uploadedBy)}</span><span>${escapeHtml(file.name)}</span><span>${formatTime(file.uploadedAt)}</span>${file.notes ? `<span>${escapeHtml(file.notes)}</span>` : ''}</div>`).join('');
   }catch(err){
-    entriesEl.innerHTML = `<div class="empty">Couldn't load history: ${escapeHtml(err.message)}</div>`;
+    uploadHistoryEl.innerHTML = `<div class="error">Couldn't load upload history: ${escapeHtml(err.message)}</div>`;
   }
+}
+
+function languageForPath(filePath){
+  const extensions = { js:'JavaScript', ts:'TypeScript', jsx:'JavaScript', tsx:'TypeScript', py:'Python', java:'Java', c:'C', cpp:'C++', cs:'C#', go:'Go', rs:'Rust', rb:'Ruby', php:'PHP', html:'HTML', css:'CSS', json:'JSON', md:'Markdown', sql:'SQL', sh:'Shell', yml:'YAML', yaml:'YAML' };
+  return extensions[filePath.split('.').pop().toLowerCase()] || 'Text';
+}
+
+/* ---- Render the current Git tree ---- */
+async function loadFiles(){
+  // Compatibility alias for callers after browser uploads.
+  await loadGitTree();
+  await loadUploadHistory();
 }
 
 let currentFiles = [];
@@ -115,7 +155,7 @@ function renderFileEntry(f, depth){
         <span class="who">${escapeHtml(f.uploadedBy)}</span>
         <span>${escapeHtml(f.displayName)}</span>
         <span class="lang-badge">${escapeHtml(f.language)}</span>
-        <span>${formatTime(f.uploadedAt)}</span>
+        ${f.uploadedAt ? `<span>${formatTime(f.uploadedAt)}</span>` : ''}
       </div>
       ${isOpen && f.notes ? `<div class="entry-note">${escapeHtml(f.notes)}</div>` : ''}
       ${isOpen ? `<pre>${content ? escapeHtml(content) : 'Loading...'}</pre>` : ''}
@@ -149,9 +189,9 @@ function renderNode(node, depth){
 
 function renderFiles(files){
   currentFiles = files;
-  countEl.textContent = files.length ? `${files.length} entr${files.length===1?'y':'ies'}` : '';
+  countEl.textContent = files.length ? `${files.length} file${files.length===1?'':'s'}` : '';
   if(!files.length){
-    entriesEl.innerHTML = `<div class="empty">No uploads yet. Add the first file above.</div>`;
+    entriesEl.innerHTML = `<div class="empty">No files on main yet. Push code with Git or upload files above.</div>`;
     return;
   }
   const tree = buildTree(dedupeByPath(files));
@@ -184,8 +224,10 @@ entriesEl.addEventListener('click', async (ev) => {
 
   if(!openContent[id]){
     try{
-      const { file } = await api(`/spaces/${spaceId}/files/${id}`);
-      openContent[id] = file.content;
+      const file = currentFiles.find(item => item.id === id);
+      openContent[id] = file.gitPath
+        ? await apiText(`/repos/${encodeURIComponent(currentRepository.owner)}/${encodeURIComponent(currentRepository.name)}/blob/${file.gitPath.split('/').map(encodeURIComponent).join('/')}?ref=main`)
+        : (await api(`/spaces/${spaceId}/files/${id}`)).file.content;
     }catch(err){
       openContent[id] = `Could not load file content: ${err.message}`;
     }
@@ -271,4 +313,3 @@ uploadBtn.addEventListener('click', async () => {
 });
 
 loadSpace();
-loadFiles();
