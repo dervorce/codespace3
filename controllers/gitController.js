@@ -2,6 +2,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const Repository = require('../models/Repository');
 const { bareRepoPath } = require('../utils/repoPath');
+const { gitBinary } = require('../utils/git');
 
 // This controller implements git's "Smart HTTP" transport, the same
 // protocol GitHub/GitLab use. It works by shelling out to the real `git`
@@ -49,7 +50,7 @@ exports.infoRefs = async (req, res, next) => {
     }
 
     const cmd = service.replace('git-', ''); // "upload-pack" | "receive-pack"
-    const child = spawn('git', [cmd, '--stateless-rpc', '--advertise-refs', repoPath]);
+    const child = spawn(gitBinary, [cmd, '--stateless-rpc', '--advertise-refs', repoPath]);
 
     res.setHeader('Content-Type', `application/x-${service}-advertisement`);
     res.setHeader('Cache-Control', 'no-cache');
@@ -81,7 +82,7 @@ exports.uploadPack = async (req, res, next) => {
     }
 
     res.setHeader('Content-Type', 'application/x-git-upload-pack-result');
-    const child = spawn('git', ['upload-pack', '--stateless-rpc', repoPath]);
+    const child = spawn(gitBinary, ['upload-pack', '--stateless-rpc', repoPath]);
     req.pipe(child.stdin);
     child.stdout.pipe(res);
     child.stderr.on('data', (chunk) => console.error('[git upload-pack]', chunk.toString()));
@@ -108,7 +109,7 @@ exports.receivePack = async (req, res, next) => {
     }
 
     res.setHeader('Content-Type', 'application/x-git-receive-pack-result');
-    const child = spawn('git', ['receive-pack', '--stateless-rpc', repoPath]);
+    const child = spawn(gitBinary, ['receive-pack', '--stateless-rpc', repoPath]);
     req.pipe(child.stdin);
     child.stdout.pipe(res);
     child.stderr.on('data', (chunk) => console.error('[git receive-pack]', chunk.toString()));

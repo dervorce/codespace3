@@ -3,13 +3,14 @@ const Repository = require('../models/Repository');
 const User = require('../models/User');
 const Member = require('../models/RepositoryMember');
 const { bareRepoPath } = require('../utils/repoPath');
+const { gitBinary } = require('../utils/git');
 const fs = require('fs');
 const { execFile } = require('child_process');
 
 function initBareRepo(repoPath) {
   return new Promise((resolve, reject) => {
     fs.mkdirSync(repoPath, { recursive: true });
-    execFile('git', ['init', '--bare', '--initial-branch=main', repoPath], (error) => error ? reject(error) : resolve());
+    execFile(gitBinary, ['init', '--bare', '--initial-branch=main', repoPath], (error) => error ? reject(error) : resolve());
   });
 }
 

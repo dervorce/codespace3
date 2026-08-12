@@ -3,11 +3,12 @@ const { execFile } = require('child_process');
 const simpleGit = require('simple-git');
 const Repository = require('../models/Repository');
 const { bareRepoPath } = require('../utils/repoPath');
+const { gitBinary } = require('../utils/git');
 
 function initBareRepo(repoPath) {
   return new Promise((resolve, reject) => {
     fs.mkdirSync(repoPath, { recursive: true });
-    execFile('git', ['init', '--bare', '--initial-branch=main', repoPath], (err) => {
+    execFile(gitBinary, ['init', '--bare', '--initial-branch=main', repoPath], (err) => {
       if (err) return reject(err);
       resolve();
     });
@@ -97,7 +98,7 @@ exports.listBranches = async (req, res, next) => {
     const repoPath = bareRepoPath(owner, repo);
     if (!fs.existsSync(repoPath)) return res.status(404).json({ error: 'Repository not found' });
 
-    const branches = await simpleGit(repoPath).branch(['-a']);
+    const branches = await simpleGit(repoPath, { binary: gitBinary }).branch(['-a']);
     res.json(branches);
   } catch (err) {
     next(err);
@@ -111,7 +112,7 @@ exports.listTree = async (req, res, next) => {
     const repoPath = bareRepoPath(owner, repo);
     if (!fs.existsSync(repoPath)) return res.status(404).json({ error: 'Repository not found' });
 
-    const raw = await simpleGit(repoPath).raw(['ls-tree', '-r', '--name-only', ref]);
+    const raw = await simpleGit(repoPath, { binary: gitBinary }).raw(['ls-tree', '-r', '--name-only', ref]);
     const files = raw.split('\n').filter(Boolean);
     res.json({ ref, files });
   } catch (err) {
@@ -128,7 +129,7 @@ exports.getFileContent = async (req, res, next) => {
     const repoPath = bareRepoPath(owner, repo);
     if (!fs.existsSync(repoPath)) return res.status(404).json({ error: 'Repository not found' });
 
-    const content = await simpleGit(repoPath).show([`${ref}:${filePath}`]);
+    const content = await simpleGit(repoPath, { binary: gitBinary }).show([`${ref}:${filePath}`]);
     res.type('text/plain').send(content);
   } catch (err) {
     res.status(404).json({ error: 'File not found at that ref' });

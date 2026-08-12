@@ -9,9 +9,10 @@ const Member = require('../models/RepositoryMember');
 const Upload = require('../models/RepositoryUpload');
 const { bareRepoPath } = require('../utils/repoPath');
 const { detectLanguage } = require('../utils/language');
+const { gitBinary } = require('../utils/git');
 
 function safePath(value) { return String(value).split('/').filter((part) => part && part !== '.' && part !== '..').join('/'); }
-async function git(args, options = {}) { return execFileAsync('git', args, options); }
+async function git(args, options = {}) { return execFileAsync(gitBinary, args, options); }
 
 async function loadRepositoryForMember(req) {
   const repo = await Repository.findById(req.params.id);
